@@ -59,6 +59,7 @@ BOARD_USE_LEGACY_TOUCHSCREEN := true
 BOARD_HAVE_HTC_FFC := true
 BOARD_USE_REVERSE_FFC := true
 
+BOARD_VOLD_MAX_PARTITIONS := 41
 
 # cat /proc/emmc
 #dev:        size     erasesize name
