@@ -1,0 +1,339 @@
+on early-init
+    export EXTERNAL_STORAGE /mnt/sdcard
+    export EXTERNAL_STORAGE2 /mnt/sdcard2
+    mkdir /mnt 0777 system sdcard_rw
+    mkdir /mnt/sdcard 0777 system sdcard_rw
+    mkdir /mnt/sdcard2 0777 system sdcard_rw
+    # for backwards compatibility
+    symlink /mnt/sdcard /sdcard
+    symlink /mnt/sdcard2 /sdcard2
+	
+	mkdir /mnt/usbdisk 0755 system system
+
+on early-fs
+    mkdir /system
+    mkdir /data 0771 system system
+    mkdir /cache 0770 system cache
+    mount ext4 /dev/block/mmcblk0p26 /system wait ro barrier=1
+    setprop ro.crypto.tmpfs_options size=128m,mode=0771,uid=1000,gid=1000
+    mount ext4 /dev/block/mmcblk0p30 /data wait noatime nosuid nodev barrier=1 noauto_da_alloc
+    mount ext4 /dev/block/mmcblk0p31 /cache wait noatime nosuid nodev barrier=1
+    mount ext4 /dev/block/mmcblk0p34 /devlog wait noatime nosuid nodev barrier=1
+    write /sys/android_touch/event_google 1
+    start pre_sysinit
+
+#on emmc
+#    mkdir /system
+#    mkdir /data 0777 system system
+#    mkdir /cache 0777 system cache
+#    mkdir /devlog 0700 root root
+#    setprop ro.crypto.tmpfs_options size=128m,mode=0771,uid=1000,gid=1000
+#    devwait emmc@system
+#        mount ext4 emmc@system /system ro barrier=1
+#    devwait emmc@userdata
+#        mount ext4 emmc@userdata /data noatime nodiratime nosuid nodev noauto_da_alloc barrier=1
+#    devwait emmc@cache
+#        mount ext4 emmc@cache /cache noatime nosuid nodev barrier=1
+#    devwait emmc@devlog
+#        mount ext4 emmc@devlog /devlog noatime nodiratime nosuid nodev noauto_da_alloc barrier=1 
+#    write /sys/android_touch/event_google 1 
+#
+#    mkdir /data/media 0777 system system
+#    mount vfat /dev/block/mmcblk0p36 /data/media rw 
+#    start pre_sysinit
+
+on post-fs-data
+    # Misc, Radio and WiFi
+    mkdir /data/radio 0770 radio radio
+    mkdir /data/misc 1771 system misc
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
+
+    # Set indication (checked by vold) that we have finished this action
+    setprop vold.post_fs_data_done 1
+    
+    #wimax
+    mkdir /data/misc/wimax 0770 wimax wimax
+    mkdir /data/misc/wimax/sockets 0770  wimax wimax
+    mkdir /data/wimax/ 0770  system system
+    mkdir /data/wimax/log 0770  system system
+
+on boot
+    # CyanogenMod SysFS entries
+    chown radio system /sys/module/gpio_event/parameters/phone_call_status
+    chmod 0664         /sys/module/gpio_event/parameters/phone_call_status
+    chown radio system /sys/camera_led_status/led_ril_status
+    chmod 0644         /sys/camera_led_status/led_ril_status
+
+    # Power Management
+    chmod 0664 /sys/module/pm/parameters/idle_sleep_mode
+
+    # Disable IPv6 over mobile radio
+#    write /proc/sys/net/ipv6/conf/rmnet0/disable_ipv6 1
+#    write /proc/sys/net/ipv6/conf/rmnet1/disable_ipv6 1
+#    write /proc/sys/net/ipv6/conf/rmnet2/disable_ipv6 1
+
+    # HTC SysFS for "Flip to Speaker"
+    chown radio radio /sys/class/htc_accelerometer/accelerometer/PhoneOnOffFlag
+    chown radio radio /sys/class/htc_ecompass/ecompass/PhoneOnOffFlag
+
+	# Node for USB service
+    mkdir /dev/bus/ 0755 root root
+    mkdir /dev/bus/usb 0755 root root
+
+    # Optical sensors
+    chown system system /sys/class/optical_sensors/lightsensor/ls_adc
+    chown system system /sys/class/optical_sensors/lightsensor/ls_auto
+    chown system system /sys/class/optical_sensors/lightsensor/ls_kadc
+    chown system radio  /sys/class/optical_sensors/proximity/ps_adc
+    chown system system /sys/class/optical_sensors/proximity/ps_kadc
+    chmod 0666          /sys/class/optical_sensors/proximity/ps_kadc
+    chown system system /sys/class/optical_sensors/proximity/ps_led
+    chown system system /sys/class/optical_sensors/proximity/ps_test_mode
+
+    # SysFS charging functions
+    chown radio radio /sys/class/power_supply/battery/charger_control
+    chmod 0660        /sys/class/power_supply/battery/charger_control
+
+    # SysFS bluetooth interface
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+    chmod 0660                /sys/class/rfkill/rfkill0/state
+
+    # Bluetooth MAC address path
+    # bluetooth MAC address programming
+    chown bluetooth bluetooth /sys/module/board_express/parameters/bdaddress
+    chown bluetooth bluetooth /sys/module/board_express/parameters/bt_chip_id
+    chown bluetooth bluetooth /sys/module/board_express/parameters/bt_fw_version
+    setprop ro.bt.bdaddr_path /sys/module/board_express/parameters/bdaddress
+
+    # Bluetooth car dock pin
+    chown system system /sys/class/switch/dock/bt_pin
+
+    # liblights permissions
+    chown system system /sys/class/leds/amber/brightness
+    chown system system /sys/class/leds/amber/blink
+    chown system system /sys/class/leds/green/brightness
+    chown system system /sys/class/leds/green/blink
+    chown system system /sys/class/leds/button-backlight/brightness
+    chown system camera /sys/class/leds/flashlight/brightness
+    chmod 0660          /sys/class/leds/flashlight/brightness
+    chown system system /sys/class/leds/lcd-backlight/brightness
+
+    # MMC devices readahead performance tweak
+    write /sys/block/mmcblk0/bdi/read_ahead_kb 1024
+    write /sys/block/mmcblk1/bdi/read_ahead_kb 1024
+
+    # Enable low memory killer to check file pages
+    #    write /sys/module/lowmemorykiller/parameters/minfile 0,0,0,5120,5632,6144
+    #    write /sys/module/lowmemorykiller/parameters/check_filepages 1
+
+    # CPU frequency scaling
+    write /sys/devices/system/cpu/cpufreq/ondemand/up_threshold 90
+    write /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate 50000
+
+    mount debugfs /sys/kernel/debug /sys/kernel/debug
+
+service wpa_supplicant /system/bin/wpa_supplicant -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
+    class main
+    socket wpa_wlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service p2p_supplicant /system/bin/wpa_supplicant -Dwext -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
+    class main
+    socket wpa_wlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_p2p /system/bin/dhcpcd -aABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
+    class late_start
+    disabled
+    oneshot
+
+service dhcpWimax /system/bin/dhcpcd -ABKL -f /etc/wimax/dhcp/wimaxDhcp.conf  wimax0
+    class main
+    class late_start
+    disabled
+    oneshot
+
+service iprenew_wlan0 /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service iprenew_p2p /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service iprenew_bnep0 /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+# Compass and accelerometer daemon
+service akmd /system/bin/akmd
+    class main
+    user compass
+    group compass misc input
+
+# ntrig_touch daemon
+service ntrig_touchd /system/bin/ntrig_touchd
+    class core
+    user system
+    group system misc input
+
+# create virtual SD card at /mnt/sdcard, based on the /data/media directory
+# deamon will drop to user/group system/media_rw after initializing
+# underlying files in /data/media wil be created with user and group media_rw (1023)
+# service sdcard /system/bin/sdcard /data/media 1023 1023
+#    class late_start
+
+service sequansd /system/bin/sequansd /etc/wimax/sequansd/sequansd_app.xml
+    user root
+    group root inet
+    socket sequansd_0 dgram 660 root root
+    disabled
+    oneshot
+
+service wimaxDhcpRelease /system/bin/wimaxDhcpRelease
+    class main
+    user root
+    group root
+    disabled
+    oneshot
+
+service wimaxDhcpRenew /system/bin/wimaxDhcpRenew
+    class main
+    user root
+    group root
+    disabled
+    oneshot
+
+service wimaxAddRoute /system/bin/wimaxAddRoute
+    class main
+    user root
+    group root
+    disabled
+    oneshot
+
+service wimaxDumpLogcat /system/bin/wimaxDumpLogcat /data/wimax/log
+    user root
+    group root
+    disabled
+    oneshot
+
+service wimaxDumpKmsg /system/bin/wimaxDumpKmsg /data/wimax/log
+    user root
+    group root
+    disabled
+    oneshot
+
+service wimaxDumpLastKmsg /system/bin/wimaxDumpLastKmsg /data/wimax/log
+    user root
+    group root
+    disabled
+    oneshot
+
+service wmxCfgItf /system/bin/wimaxConfigInterface
+    user root
+    group root
+    disabled
+    oneshot
+
+service wimaxDaemon /system/bin/wimaxDaemon
+    user root
+    group root
+
+# wimax_mtd daemon
+service wimax_mtd /system/bin/wimax_mtd
+    user root
+    group root
+    oneshot
+
+# setWMXPropd daemon
+service setWMXPropd /system/bin/setWiMAXPropDaemond
+    user root
+    group root
+    oneshot
+
+# getWMXPropd daemon
+service getWMXPropd /system/bin/getWiMAXPropDaemond
+    user root
+    group root
+    oneshot
+
+service dmagent /system/bin/dmagent -N -P19 -VSY
+    socket dmagent stream 660 root radio
+    user root
+    group radio cache inet misc
+
+service modem /system/bin/wireless_modem
+    user system
+    group system radio
+    disabled
+
+
+# Bugreport is triggered by the KEY_VOLUMEUP and BTN_MOUSE keycodes
+service bugreport /system/bin/bugmailer.sh -v
+    class main
+    disabled
+    oneshot
+    keycodes 114 115 116
+
+service hciattach /system/bin/brcm_patchram_plus --enable_hci \
+        --tosleep 50000 --baudrate 3000000 --use_baudrate_for_download \
+        --patchram /vendor/firmware/bcm4329.hcd /dev/ttyHS0
+    class main
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+    oneshot
+
+
+#service hciattach /system/bin/logwrapper /system/bin/hciattach /dev/ttyHS0 any 3000000 
+#    user bluetooth
+#    group bluetooth net_bt_admin
+#    disabled
+
+# Make sure we startup btld before hcid
+# Set target address to emulator host loopback IF
+# Limit baudrate to 460800 to ensure reliable uart operation
+#service btld /system/bin/logwrapper /system/bin/btld -hwtun 10.0.2.2 -hb 460800 3000000 -lpm 1
+#service btld /system/bin/logwrapper /system/bin/btld -lpm 1 -hb 3000000
+#    user root
+#    group bluetooth net_bt_admin
+#    disabled
+#    oneshot
+
+
+# service rmt_storage /system/bin/rmt_storage /dev/block/mmcblk0p27 /dev/block/mmcblk0p28
+#    class main
+#    user root
+
+on property:ro.use_data_netmgrd=false
+    # netmgr not supported on specific target
+    stop netmgrd
+
+service sysinit /system/bin/logwrapper /system/xbin/busybox run-parts /system/etc/init.d
+    user root
+    disabled
+    oneshot
+
+service pre_sysinit /system/bin/logwrapper /system/xbin/busybox run-parts /system/etc/pre-init.d
+    user root
+    disabled
+    oneshot
