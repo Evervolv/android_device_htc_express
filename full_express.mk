@@ -17,7 +17,7 @@
 $(call inherit-product, device/htc/msm7x30-common/msm7x30.mk)
 
 # Inherit some common evervolv stuff.
-$(call inherit-product, vendor/cm/config/cdma.mk)
+$(call inherit-product, vendor/ev/config/cdma.mk)
 
 # The gps config appropriate for this device
 PRODUCT_COPY_FILES += \
