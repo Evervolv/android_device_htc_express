@@ -2,7 +2,7 @@
 $(call inherit-product, device/htc/express/full_express.mk)
 
 # Inherit some common evervolv stuff.
-$(call inherit-product, vendor/cm/config/common_full_phone.mk)
+$(call inherit-product, vendor/ev/config/common_full_phone.mk)
 
 # Inherit WiMAX stuff
 #$(call inherit-product, vendor/ev/config/wimax.mk)
