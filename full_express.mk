@@ -111,6 +111,14 @@ else
 LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
 endif
 
+# Kernel Modules
+ifeq (,$(BUILD_KERNEL))
+PRODUCT_COPY_FILES += $(shell \
+    find device/htc/express/modules -name '*.ko' \
+    | sed -r 's/^\/?(.*\/)([^/ ]+)$$/\1\2:system\/lib\/modules\/\2/' \
+    | tr '\n' ' ')
+endif
+
 PRODUCT_COPY_FILES += \
     $(LOCAL_KERNEL):kernel
 
