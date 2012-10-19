@@ -18,4 +18,4 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/express.mk
+    $(LOCAL_DIR)/full_express.mk
