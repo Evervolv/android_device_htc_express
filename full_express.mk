@@ -99,6 +99,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/htc/express/idc/synaptics-rmi-touchscreen.idc:/system/usr/idc/synaptics-rmi-touchscreen.idc \
     device/htc/express/idc/Ntrig-touchscreen.idc:/system/usr/idc/Ntrig-touchscreen.idc \
+    device/htc/express/idc/Ntrig-Pen-touchscreen-v2.idc:/system/usr/idc/Ntrig-Pen-touchscreen-v2.idc \
     device/htc/express/idc/Ntrig-Pen-touchscreen.idc:/system/usr/idc/Ntrig-Pen-touchscreen.idc
 
 
