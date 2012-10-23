@@ -106,23 +106,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/htc/express/vold.fstab:system/etc/vold.fstab
 
-ifeq ($(TARGET_PREBUILT_KERNEL),)
-LOCAL_KERNEL := device/htc/speedy/prebuilt/root/kernel
-else
-LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
-endif
-
-# Kernel Modules
-ifeq (,$(BUILD_KERNEL))
-PRODUCT_COPY_FILES += $(shell \
-    find device/htc/express/modules -name '*.ko' \
-    | sed -r 's/^\/?(.*\/)([^/ ]+)$$/\1\2:system\/lib\/modules\/\2/' \
-    | tr '\n' ' ')
-endif
-
-PRODUCT_COPY_FILES += \
-    $(LOCAL_KERNEL):kernel
-
 # High-density art, but English locale
 PRODUCT_LOCALES += en
 
